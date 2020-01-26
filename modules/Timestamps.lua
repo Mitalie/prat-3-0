@@ -240,6 +240,18 @@ Prat:AddModuleToLoad(function()
     },
   })
 
+  local CF_MEH_env = setmetatable({}, { __index = _G, __newindex = _G })
+  Prat:SetModuleInit(module, function()
+    -- Prepare ability to disable blizz timestamps
+    if issecurevariable("ChatFrame_MessageEventHandler") then
+      setfenv(ChatFrame_MessageEventHandler, CF_MEH_env)
+    else
+      -- An addon has modified ChatFrame_MessageEventHandler and likely
+      -- replaced / hooked it, so we can't setfenv the original function.
+      -- TODO Print a warning
+    end
+  end)
+
   function module:OnModuleEnable()
     -- For this module to work, it must hook before Prat
     for _, v in pairs(Prat.HookedFrames) do
@@ -247,15 +259,7 @@ Prat:AddModuleToLoad(function()
     end
 
     -- Disable blizz timestamps
-    if issecurevariable("ChatFrame_MessageEventHandler") then
-      local env = { CHAT_TIMESTAMP_FORMAT = false } -- nil would simply defer to __index
-      setmetatable(env, { __index = _G, __newindex = _G })
-      setfenv(ChatFrame_MessageEventHandler, env)
-    else
-      -- An addon has modified ChatFrame_MessageEventHandler and chances
-      -- are it's a hook so we can't setfenv the Blizzard function.
-      -- TODO Print a warning, maybe show which addon tainted it?
-    end
+    rawset(CF_MEH_env, "CHAT_TIMESTAMP_FORMAT", false)
 
     self:RawHook("ChatChannelDropDown_PopOutChat", true)
 
@@ -264,6 +268,11 @@ Prat:AddModuleToLoad(function()
 
     Prat.RegisterChatEvent(self, Prat.Events.FRAMES_UPDATED)
     Prat.RegisterChatEvent(self, Prat.Events.FRAMES_REMOVED)
+  end
+
+  function module:OnModuleDisable()
+    -- Restore blizz timestamps
+    rawset(CF_MEH_env, "CHAT_TIMESTAMP_FORMAT", nil)
   end
 
   function module:GetDescription()
