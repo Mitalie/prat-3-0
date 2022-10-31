@@ -38,6 +38,7 @@ local Prat = Prat
 local pcall = pcall
 local setmetatable = setmetatable
 local tinsert = tinsert
+local geterrorhandler = geterrorhandler
 -- Isolate the environment
 setfenv(1, select(2, ...))
 

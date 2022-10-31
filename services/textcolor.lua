@@ -42,6 +42,7 @@ setfenv(1, select(2, ...))
 
 
 local CLR = {}
+select(2, ...).CLR = CLR
 
 CLR.DEFAULT = "ffffff" -- default to white
 CLR.LINK = {
